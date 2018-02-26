@@ -4,7 +4,6 @@ const multer = require('multer');
 const jimp = require('jimp');
 const uuid = require('uuid');
 
-
 const multerOptions = {
   storage: multer.memoryStorage(),
   fileFilter (req, file, next) {
@@ -36,10 +35,13 @@ exports.resize = async (req, res, next) => {
   console.log(req.file);
   const extension = req.file.mimetype.split('/')[1];
   req.body.photo = `${uuid.v4()}.${extension}`;
+  console.log('req.body.photo is: ', req.body.photo);
 
   const photo = await jimp.read(req.file.buffer);
+  console.log('The photo back from jimp.read is: ', photo);
   await photo.resize(800, jimp.AUTO);
-  await photo.write(`/public/uploads/${req.body.photo}`);
+  console.log('The jimp photo again after resize: ', photo);
+  await photo.write(`./public/uploads/${req.body.photo}`);
   next();
 };
 
@@ -54,10 +56,18 @@ exports.getStores = async (req, res) => {
   res.render('stores', { title: 'Stores', stores });
 };
 
+exports.getStoreBySlug = async (req, res, next) => {
+  const store = await Store.findOne({slug: req.params.slug});
+  if (!store) {
+    return next();
+  }
+  res.render('store', { title: store.name, store });
+};
+
 exports.editStore = async (req, res) => {
   const store = await Store.findOne({_id: req.params.id});
   res.render('editStore', { title: `Edit ${store.name}`, store });
-}
+};
 
 exports.updateStore = async (req, res) => {
   // set the location data to be a point
