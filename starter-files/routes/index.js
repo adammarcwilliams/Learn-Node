@@ -22,4 +22,8 @@ router.post(`/add/:id`,
   catchErrors(storeController.resize),
   catchErrors(storeController.updateStore));
 
+// Tags page
+router.get('/tags', catchErrors(storeController.getStoresByTag));
+router.get('/tags/:tag', catchErrors(storeController.getStoresByTag));
+
 module.exports = router;

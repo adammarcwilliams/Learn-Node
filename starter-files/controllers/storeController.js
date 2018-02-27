@@ -29,39 +29,21 @@ exports.upload = multer(multerOptions).single('photo');
 exports.resize = async (req, res, next) => {
   // check if there is no new file to resize
   if (!req.file) {
-    next(); // skip to the next middleware
-    return;
+    return next(); // skip to the next middleware
   }
-  console.log(req.file);
   const extension = req.file.mimetype.split('/')[1];
   req.body.photo = `${uuid.v4()}.${extension}`;
-  console.log('req.body.photo is: ', req.body.photo);
 
   const photo = await jimp.read(req.file.buffer);
-  console.log('The photo back from jimp.read is: ', photo);
   await photo.resize(800, jimp.AUTO);
-  console.log('The jimp photo again after resize: ', photo);
   await photo.write(`./public/uploads/${req.body.photo}`);
-  next();
+  return next();
 };
 
 exports.createStore = async (req, res) => {
   const store = await (new Store(req.body)).save();
   req.flash('success', `Successfully Created ${store.name}. Care to leave a review?`);
   res.redirect(`/store/${store.slug}`);
-};
-
-exports.getStores = async (req, res) => {
-  const stores = await Store.find();
-  res.render('stores', { title: 'Stores', stores });
-};
-
-exports.getStoreBySlug = async (req, res, next) => {
-  const store = await Store.findOne({slug: req.params.slug});
-  if (!store) {
-    return next();
-  }
-  res.render('store', { title: store.name, store });
 };
 
 exports.editStore = async (req, res) => {
@@ -78,4 +60,23 @@ exports.updateStore = async (req, res) => {
   }).exec();
   req.flash('success', `Successfully updated <strong>${store.name}</strong>. <a href="/stores/${store.slug}">View Store ⮕</a>`);
   res.redirect(`/stores/${store._id}/edit`);
+};
+
+exports.getStores = async (req, res) => {
+  const stores = await Store.find();
+  res.render('stores', { title: 'Stores', stores });
+};
+
+exports.getStoreBySlug = async (req, res, next) => {
+  const store = await Store.findOne({slug: req.params.slug});
+  if (!store) {
+    return next();
+  }
+  res.render('store', { title: store.name, store });
+};
+
+exports.getStoresByTag = async (req, res) => {
+  const tags = await Store.getTagsList();
+  const tag = req.params.tag;
+  res.render('tag', { title: 'Tags', tags, tag });
 };
